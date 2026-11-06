@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Para o Meu Amor — Uma Surpresa nas Estrelas</title>
+  <meta name="description" content="Uma surpresa interativa especial feita com todo o meu amor para você." />
+  <meta name="theme-color" content="#08071a" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Fundo do Céu Estrelado Interativo -->
+  <canvas id="starfield-canvas" aria-hidden="true"></canvas>
+
+  <!-- Nebulosas de Fundo Decorativas -->
+  <div class="nebula nebula-1" aria-hidden="true"></div>
+  <div class="nebula nebula-2" aria-hidden="true"></div>
+  <div class="nebula nebula-3" aria-hidden="true"></div>
+
+  <!-- Camada para Explosões de Corações Globais -->
+  <div id="floating-effects-layer" aria-hidden="true"></div>
+
+  <!-- Botão de Som Discreto no Canto Superior Direito -->
+  <header class="top-bar">
+    <button type="button" id="btn-audio-toggle" class="icon-btn" aria-label="Ativar ou desativar sons mágicos" title="Sons Mágicos">
+      <!-- Ícone Som Ligado -->
+      <svg id="icon-sound-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+      </svg>
+      <!-- Ícone Som Desligado -->
+      <svg id="icon-sound-off" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <line x1="23" y1="9" x2="17" y2="15"></line>
+        <line x1="17" y1="9" x2="23" y2="15"></line>
+      </svg>
+    </button>
+  </header>
+
+  <main class="main-stage">
+    <!-- ================================================================== -->
+    <!-- ETAPA 1: BOAS-VINDAS & BOTÃO FUJÃO                                 -->
+    <!-- ================================================================== -->
+    <section id="screen-intro" class="stage-screen active" aria-labelledby="intro-title">
+      <div class="glass-card intro-card">
+        <!-- Ilustração de Constelação em Formato de Coração -->
+        <div class="constellation-badge" aria-hidden="true">
+          <svg class="constellation-svg" viewBox="0 0 160 145" fill="none">
+            <!-- Linhas da constelação -->
+            <path class="constellation-path" d="M80 130 L32 82 L18 50 L36 22 L64 24 L80 44 L96 24 L124 22 L142 50 L128 82 Z" stroke="url(#constellationGrad)" stroke-width="1.5" stroke-dasharray="4 4" />
+            <path class="constellation-glow-path" d="M80 130 L32 82 L18 50 L36 22 L64 24 L80 44 L96 24 L124 22 L142 50 L128 82 Z" stroke="url(#constellationGrad)" stroke-width="2" />
+            <!-- Estrelas nos vértices -->
+            <circle cx="80" cy="130" r="4" fill="#fde047" class="star-node" />
+            <circle cx="32" cy="82" r="3" fill="#fb7185" class="star-node" />
+            <circle cx="18" cy="50" r="3.5" fill="#fde047" class="star-node" />
+            <circle cx="36" cy="22" r="4" fill="#f472b6" class="star-node" />
+            <circle cx="64" cy="24" r="3" fill="#e879f9" class="star-node" />
+            <circle cx="80" cy="44" r="4.5" fill="#fde047" class="star-node pulse-fast" />
+            <circle cx="96" cy="24" r="3" fill="#e879f9" class="star-node" />
+            <circle cx="124" cy="22" r="4" fill="#f472b6" class="star-node" />
+            <circle cx="142" cy="50" r="3.5" fill="#fde047" class="star-node" />
+            <circle cx="128" cy="82" r="3" fill="#fb7185" class="star-node" />
+            <!-- Coração central brilhante -->
+            <path d="M80 98 C80 98 50 74 50 54 C50 42 60 34 70 34 C76 34 80 39 80 43 C80 39 84 34 90 34 C100 34 110 42 110 54 C110 74 80 98 80 98 Z" fill="url(#heartCenterGrad)" />
+            <defs>
+              <linearGradient id="constellationGrad" x1="0" y1="0" x2="160" y2="145" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#f472b6" />
+                <stop offset="50%" stop-color="#fde047" />
+                <stop offset="100%" stop-color="#c084fc" />
+              </linearGradient>
+              <linearGradient id="heartCenterGrad" x1="50" y1="34" x2="110" y2="98" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#fb7185" />
+                <stop offset="100%" stop-color="#e11d48" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+
+        <span class="cosmic-tag">
+          <svg class="inline-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L14.8 8.5L22 9.3L16.5 14L18.2 21L12 17.3L5.8 21L7.5 14L2 9.3L9.2 8.5L12 2Z" />
+          </svg>
+          Edição Especial Estelar
+        </span>
+
+        <h1 id="intro-title" class="romantic-title">
+          Olá, <span id="el-nome-dela" class="gradient-script">Meu Amor</span>
+        </h1>
+
+        <p id="el-subtitulo-inicial" class="intro-subtitle">
+          Uma mensagem secreta viajou pelo universo só para chegar até você
+        </p>
+
+        <div class="intro-divider" aria-hidden="true">
+          <span></span>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          <span></span>
+        </div>
+
+        <p id="el-texto-introducao" class="intro-description">
+          Antes de abrir o envelope estelar que preparei para você, existe um pequeno desafio: capturar os corações que estão caindo do céu para carregar o nosso Medidor de Amor em 100%!
+        </p>
+
+        <div class="playful-question-box">
+          <p id="el-pergunta-brincadeira" class="playful-question">
+            Mas antes... você promete que sabe que é a mulher mais incrível desse mundo?
+          </p>
+          <p id="runaway-feedback" class="runaway-feedback" aria-live="polite"></p>
+
+          <div class="intro-actions" id="intro-buttons-Arena">
+            <button type="button" id="btn-start-game" class="btn-primary-glow">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              </svg>
+              <span id="el-botao-sim">Prometo! Quero jogar</span>
+            </button>
+
+            <button type="button" id="btn-runaway-no" class="btn-ghost-runaway">
+              <span id="el-botao-nao">Tenho minhas dúvidas...</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- ETAPA 2: JOGUINHO ARCADE "CHUVA DE AMOR ESTELAR"                    -->
+    <!-- ================================================================== -->
+    <section id="screen-game" class="stage-screen" aria-labelledby="game-title">
+      <div class="game-wrapper glass-card">
+        <!-- Cabeçalho do Jogo e Medidor de Amor -->
+        <div class="game-hud">
+          <div class="hud-top-row">
+            <div>
+              <h2 id="game-title" class="game-heading">Chuva de Amor Estelar</h2>
+              <p id="game-status-text" class="game-subtext">Arraste o cesto luminoso para capturar os corações!</p>
+            </div>
+            <div class="love-percentage-badge" id="love-percentage-badge">0%</div>
+          </div>
+
+          <!-- Barra de Progresso do Amor -->
+          <div class="love-meter-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="love-progressbar">
+            <div class="love-meter-fill" id="love-meter-fill">
+              <div class="love-meter-shimmer"></div>
+            </div>
+            <div class="love-meter-heart-indicator" id="love-meter-knob">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Legenda Rápida dos Itens -->
+          <div class="game-legend">
+            <span class="legend-item">
+              <span class="legend-dot rose"></span> Coração Rosa: <strong>+1</strong>
+            </span>
+            <span class="legend-item">
+              <span class="legend-dot gold"></span> Estrela Dourada: <strong>+3</strong>
+            </span>
+          </div>
+        </div>
+
+        <!-- Arena Canvas do Jogo -->
+        <div class="game-arena-container" id="game-arena-container">
+          <canvas id="game-canvas"></canvas>
+
+          <!-- Dica inicial de controle -->
+          <div id="game-touch-hint" class="game-touch-hint">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8L22 12L18 16" />
+              <path d="M6 8L2 12L6 16" />
+              <line x1="2" y1="12" x2="22" y2="12" />
+            </svg>
+            <span>Mova com o dedo, mouse ou setas do teclado</span>
+          </div>
+        </div>
+
+        <!-- Rodapé do Jogo -->
+        <div class="game-footer">
+          <span class="score-counter">
+            Corações capturados: <strong id="score-points">0</strong> / <strong id="score-target">20</strong>
+          </span>
+          <button type="button" id="btn-skip-game" class="btn-text-link">
+            Ansiosa? Ir direto para a carta →
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- ETAPA 3: O ENVELOPE ESTELAR 3D E A CARTA                           -->
+    <!-- ================================================================== -->
+    <section id="screen-letter" class="stage-screen" aria-labelledby="envelope-prompt-title">
+      <!-- Fase A: O Envelope Fechado Prontinho Para Abrir -->
+      <div id="envelope-stage" class="envelope-stage">
+        <div class="unlock-celebration-header">
+          <span class="cosmic-tag success-tag">
+            <svg class="inline-icon" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L14.8 8.5L22 9.3L16.5 14L18.2 21L12 17.3L5.8 21L7.5 14L2 9.3L9.2 8.5L12 2Z" />
+            </svg>
+            Medidor de Amor 100% Completo!
+          </span>
+          <h2 id="envelope-prompt-title" class="romantic-title medium">
+            Você desbloqueou a sua carta!
+          </h2>
+          <p class="envelope-instruction" id="envelope-instruction">
+            Toque no selo dourado de coração para abrir o envelope
+          </p>
+        </div>
+
+        <!-- Envelope 3D Interativo -->
+        <div class="envelope-3d-Scene">
+          <button type="button" id="envelope-3d" class="envelope-3d" aria-label="Abrir envelope de carta de amor">
+            <!-- Brilho mágico atrás do envelope -->
+            <div class="envelope-aura"></div>
+
+            <!-- Parte de trás do envelope -->
+            <div class="envelope-back"></div>
+
+            <!-- Slot com máscara inferior para a folha subir sem nunca vazar pelo fundo -->
+            <div class="envelope-letter-slot">
+              <!-- Papel da carta que desliza para cima depois que a aba abre -->
+              <div class="envelope-letter-preview" id="envelope-letter-preview">
+                <div class="preview-inner-border">
+                  <span class="preview-script" id="preview-greeting">Para Meu Amor</span>
+                  <div class="preview-lines">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                  <svg class="preview-heart" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dobras laterais e frontal do envelope -->
+            <div class="envelope-front-left"></div>
+            <div class="envelope-front-right"></div>
+            <div class="envelope-front-bottom"></div>
+
+            <!-- Aba superior que abre em 3D -->
+            <div class="envelope-flap" id="envelope-flap"></div>
+
+            <!-- Selo de Cera Dourado com Coração -->
+            <div class="wax-seal" id="wax-seal">
+              <div class="wax-seal-ring">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+              </div>
+              <span class="seal-pulse-ring"></span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Fase B: A Carta Aberta Completa + Frase em Destaque + Extras -->
+      <div id="letter-opened-view" class="letter-opened-view hidden">
+        <!-- Cartão da Carta Romântica -->
+        <article class="letter-parchment glass-card">
+          <div class="letter-corner corner-tl" aria-hidden="true"></div>
+          <div class="letter-corner corner-tr" aria-hidden="true"></div>
+          <div class="letter-corner corner-bl" aria-hidden="true"></div>
+          <div class="letter-corner corner-br" aria-hidden="true"></div>
+
+          <div class="letter-header">
+            <div class="letter-seal-mini" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              </svg>
+            </div>
+            <p class="letter-sky-label">Sob o nosso céu estrelado</p>
+            <h2 id="el-titulo-carta" class="letter-salutation">Para a dona do meu coração,</h2>
+          </div>
+
+          <!-- FRASE PRINCIPAL EM DESTAQUE (Com efeito máquina de escrever suave) -->
+          <blockquote class="featured-quote-box">
+            <svg class="quote-sparkle sparkle-left" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" />
+            </svg>
+            <p id="el-frase-destaque" class="featured-quote-text"></p>
+            <svg class="quote-sparkle sparkle-right" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" />
+            </svg>
+          </blockquote>
+
+          <!-- Corpo da Carta -->
+          <div id="el-paragrafos-carta" class="letter-body"></div>
+
+          <!-- Assinatura -->
+          <footer class="letter-signature-block">
+            <p id="el-despedida-carta" class="letter-farewell">Com todo o amor que existe em mim,</p>
+            <p id="el-seu-nome" class="letter-signature-name">Seu Eterno Apaixonado</p>
+          </footer>
+        </article>
+
+        <!-- Seção Extra 1: Constelação de Motivos ("Clique nas estrelas") -->
+        <section class="reasons-constellation-section glass-card" aria-labelledby="reasons-heading">
+          <h3 id="reasons-heading" class="section-subtitle-script">Constelação do Nosso Amor</h3>
+          <p class="section-helper">Toque em cada estrela brilhante para descobrir um segredo:</p>
+
+          <div id="stars-reasons-nav" class="stars-reasons-nav" role="tablist"></div>
+
+          <div id="reason-display-card" class="reason-display-card" role="tabpanel" aria-live="polite">
+            <h4 id="reason-title" class="reason-card-title"></h4>
+            <p id="reason-text" class="reason-card-text"></p>
+          </div>
+        </section>
+
+        <!-- Botões Finais de Interação -->
+        <div class="final-actions">
+          <button type="button" id="btn-love-shower" class="btn-primary-glow">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+            <span>Chuva de "Eu Te Amo!"</span>
+          </button>
+
+          <button type="button" id="btn-replay-game" class="btn-secondary-glass">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="1 4 1 10 7 10"></polyline>
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+            </svg>
+            <span>Jogar de Novo</span>
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
