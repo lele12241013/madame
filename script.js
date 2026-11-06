@@ -134,8 +134,21 @@
   }
 
   // --------------------------------------------------------------------------
-  // 3. CÉU ESTRELADO INTERATIVO (Background Canvas)
+  // 3. CÉU ESTRELADO INTERATIVO (Otimizado para Mobile 60fps)
   // --------------------------------------------------------------------------
+  let currentStep = 1;
+  let rainTimeouts = [];
+
+  function clearLoveRain() {
+    while (rainTimeouts.length > 0) {
+      clearTimeout(rainTimeouts.pop());
+    }
+    const layer = document.getElementById("floating-effects-layer");
+    if (layer) {
+      layer.innerHTML = "";
+    }
+  }
+
   function initStarfield() {
     const canvas = document.getElementById("starfield-canvas");
     if (!canvas) return;
@@ -144,99 +157,50 @@
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
 
-    const starColors = ["#ffffff", "#fde047", "#fda4af", "#e9d5ff", "#93c5fd"];
+    const starColors = ["#ffffff", "#fde047", "#fda4af", "#e9d5ff"];
     const stars = [];
-    const shootingStars = [];
 
     function createStars() {
       stars.length = 0;
-      const count = Math.min(160, Math.floor((width * height) / 9000));
+      const isMobile = width < 768;
+      const count = isMobile ? 35 : Math.min(75, Math.floor((width * height) / 15000));
       for (let i = 0; i < count; i++) {
         stars.push({
           x: Math.random() * width,
           y: Math.random() * height,
-          radius: Math.random() * 1.8 + 0.4,
-          color: starColors[Math.floor(Math.random() * starColors.length)],
-          alpha: Math.random() * 0.8 + 0.2,
-          twinkleSpeed: (Math.random() * 0.018 + 0.005) * (Math.random() < 0.5 ? 1 : -1),
-          driftY: Math.random() * 0.12 + 0.03
-        });
-      }
-    }
-
-    function maybeSpawnShootingStar() {
-      if (shootingStars.length < 2 && Math.random() < 0.012) {
-        shootingStars.push({
-          x: Math.random() * width * 0.8 + width * 0.1,
-          y: Math.random() * height * 0.35,
-          vx: -(Math.random() * 5 + 5),
-          vy: Math.random() * 3.5 + 2.5,
-          length: Math.random() * 75 + 45,
-          life: 1
+          radius: Math.random() * 1.5 + 0.5,
+          color: starColors[i % starColors.length],
+          alpha: Math.random() * 0.7 + 0.25,
+          twinkleSpeed: (Math.random() * 0.012 + 0.004) * (Math.random() < 0.5 ? 1 : -1)
         });
       }
     }
 
     function renderStarfield() {
+      // Pausar animação do fundo enquanto o joguinho está rodando para não pesar no celular
+      if (currentStep === 2) {
+        requestAnimationFrame(renderStarfield);
+        return;
+      }
+
       ctx.clearRect(0, 0, width, height);
 
-      // Desenhar estrelas fixas cintilantes
       for (let i = 0; i < stars.length; i++) {
         const s = stars[i];
         s.alpha += s.twinkleSpeed;
-        if (s.alpha > 1) {
-          s.alpha = 1;
+        if (s.alpha > 0.95) {
+          s.alpha = 0.95;
           s.twinkleSpeed *= -1;
-        } else if (s.alpha < 0.2) {
-          s.alpha = 0.2;
+        } else if (s.alpha < 0.25) {
+          s.alpha = 0.25;
           s.twinkleSpeed *= -1;
         }
 
-        s.y -= s.driftY;
-        if (s.y < 0) s.y = height;
-
-        ctx.save();
         ctx.globalAlpha = s.alpha;
         ctx.fillStyle = s.color;
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+        ctx.fillRect(s.x, s.y, s.radius * 1.6, s.radius * 1.6);
       }
-
-      // Estrelas cadentes
-      maybeSpawnShootingStar();
-      for (let i = shootingStars.length - 1; i >= 0; i--) {
-        const st = shootingStars[i];
-        st.x += st.vx;
-        st.y += st.vy;
-        st.life -= 0.018;
-
-        if (st.life <= 0 || st.x < -100 || st.y > height + 100) {
-          shootingStars.splice(i, 1);
-          continue;
-        }
-
-        ctx.save();
-        const grad = ctx.createLinearGradient(
-          st.x,
-          st.y,
-          st.x - st.vx * (st.length / 8),
-          st.y - st.vy * (st.length / 8)
-        );
-        grad.addColorStop(0, `rgba(253, 224, 71, ${st.life})`);
-        grad.addColorStop(0.4, `rgba(251, 113, 133, ${st.life * 0.6})`);
-        grad.addColorStop(1, "rgba(255, 255, 255, 0)");
-
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = 2;
-        ctx.lineCap = "round";
-        ctx.beginPath();
-        ctx.moveTo(st.x, st.y);
-        ctx.lineTo(st.x - st.vx * (st.length / 8), st.y - st.vy * (st.length / 8));
-        ctx.stroke();
-        ctx.restore();
-      }
+      ctx.globalAlpha = 1;
 
       requestAnimationFrame(renderStarfield);
     }
@@ -254,10 +218,11 @@
   // --------------------------------------------------------------------------
   // 4. NAVEGAÇÃO ENTRE TELAS E BOTÃO FUJÃO DA ETAPA 1
   // --------------------------------------------------------------------------
-  let currentStep = 1;
-
   function goToStep(stepNumber) {
     currentStep = stepNumber;
+    // Garantir que nenhuma chuva de amor fique caindo durante o jogo ou troca de tela
+    clearLoveRain();
+
     const screens = {
       1: document.getElementById("screen-intro"),
       2: document.getElementById("screen-game"),
@@ -271,14 +236,6 @@
         screen.classList.add("active");
       } else {
         screen.classList.remove("active");
-      }
-    });
-
-    // Atualizar pílulas de navegação
-    [1, 2, 3].forEach((idx) => {
-      const pill = document.getElementById(`pill-step-${idx}`);
-      if (pill) {
-        pill.classList.toggle("active", idx === stepNumber);
       }
     });
 
@@ -438,21 +395,9 @@
     if (btnStart) {
       btnStart.addEventListener("click", () => {
         SoundFX.playHeartCatch();
-        spawnGlobalHeartBurst(6);
         goToStep(2);
       });
     }
-
-    // Navegação pelas pílulas do topo
-    [1, 2, 3].forEach((step) => {
-      const pill = document.getElementById(`pill-step-${step}`);
-      if (pill) {
-        pill.addEventListener("click", () => {
-          SoundFX.playHeartCatch();
-          goToStep(step);
-        });
-      }
-    });
 
     // Botão de som
     const btnAudio = document.getElementById("btn-audio-toggle");
@@ -471,7 +416,7 @@
   }
 
   // --------------------------------------------------------------------------
-  // 5. JOGUINHO ARCADE: "CHUVA DE AMOR ESTELAR"
+  // 5. JOGUINHO ARCADE: "CHUVA DE AMOR ESTELAR" (Ultra Otimizado 60fps Mobile)
   // --------------------------------------------------------------------------
   const ArcadeGame = {
     canvas: null,
@@ -483,9 +428,13 @@
     points: 0,
     targetPoints: 20,
     completed: false,
-    magnetTimer: 0,
     lastSpawnTime: 0,
     keys: { left: false, right: false },
+    sprites: {
+      rose: null,
+      gold: null,
+      basket: null
+    },
 
     catcher: {
       x: 0,
@@ -502,8 +451,9 @@
     init() {
       this.canvas = document.getElementById("game-canvas");
       if (!this.canvas) return;
-      this.ctx = this.canvas.getContext("2d");
+      this.ctx = this.canvas.getContext("2d", { alpha: true });
       this.targetPoints = Number(cfg.metaPontosAmor) || 20;
+      this.buildSprites();
 
       const container = document.getElementById("game-arena-container");
       const updatePositionFromClientX = (clientX) => {
@@ -572,10 +522,71 @@
       }
     },
 
+    // Pré-renderiza os corações e o cesto 1 única vez para não usar shadowBlur a cada frame
+    buildSprites() {
+      const makeHeartSprite = (size, fillColor, glowColor) => {
+        const c = document.createElement("canvas");
+        c.width = size * 2;
+        c.height = size * 2;
+        const g = c.getContext("2d");
+        g.translate(size, size - size * 0.42);
+        g.shadowColor = glowColor;
+        g.shadowBlur = 6;
+        g.fillStyle = fillColor;
+        this.drawHeartPath(g, 0, 0, size);
+        g.fill();
+        return c;
+      };
+
+      this.sprites.rose = makeHeartSprite(28, "#fb7185", "#f43f5e");
+      this.sprites.gold = makeHeartSprite(32, "#fde047", "#f59e0b");
+
+      // Pré-renderizar o cesto estelar
+      const bw = this.catcher.width;
+      const bh = this.catcher.height;
+      const bc = document.createElement("canvas");
+      bc.width = bw + 16;
+      bc.height = bh + 16;
+      const bctx = bc.getContext("2d");
+      const ox = 8;
+      const oy = 8;
+
+      const basketGrad = bctx.createLinearGradient(ox, oy, ox + bw, oy);
+      basketGrad.addColorStop(0, "#ec4899");
+      basketGrad.addColorStop(0.5, "#fde047");
+      basketGrad.addColorStop(1, "#a855f7");
+
+      bctx.fillStyle = basketGrad;
+      bctx.beginPath();
+      if (bctx.roundRect) {
+        bctx.roundRect(ox, oy, bw, bh, 14);
+      } else {
+        bctx.rect(ox, oy, bw, bh);
+      }
+      bctx.fill();
+
+      bctx.fillStyle = "#171136";
+      bctx.beginPath();
+      if (bctx.roundRect) {
+        bctx.roundRect(ox + 3, oy + 3, bw - 6, bh - 6, 11);
+      } else {
+        bctx.rect(ox + 3, oy + 3, bw - 6, bh - 6);
+      }
+      bctx.fill();
+
+      bctx.fillStyle = "#fb7185";
+      this.drawHeartPath(bctx, ox + bw / 2, oy + 6, 16);
+      bctx.fill();
+
+      this.sprites.basket = bc;
+    },
+
     resize() {
       if (!this.canvas) return;
       const rect = this.canvas.parentElement.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      // Em celulares usa DPR 1 para aliviar a GPU e garantir 60fps cravados
+      const isMobile = window.innerWidth < 768;
+      const dpr = isMobile ? 1 : Math.min(window.devicePixelRatio || 1, 1.5);
       this.width = rect.width;
       this.height = rect.height;
       this.canvas.width = this.width * dpr;
@@ -591,6 +602,7 @@
 
     start() {
       if (!this.canvas) this.init();
+      clearLoveRain();
       this.resize();
       if (this.completed) {
         this.resetScore();
@@ -620,7 +632,6 @@
       this.items = [];
       this.particles = [];
       this.floatingTexts = [];
-      this.magnetTimer = 0;
       this.updateHUD();
     },
 
@@ -629,31 +640,28 @@
       let type = "rose";
       let value = 1;
       let radius = 15;
-      let speed = Math.random() * 1.4 + 2.0;
+      let speed = Math.random() * 1.4 + 2.2;
 
       if (rand > 0.78) {
         type = "gold";
         value = 3;
         radius = 18;
-        speed = Math.random() * 1.6 + 2.4;
+        speed = Math.random() * 1.6 + 2.5;
       }
 
       const margin = 28;
       this.items.push({
         x: margin + Math.random() * (this.width - margin * 2),
         y: -25,
-        vx: (Math.random() - 0.5) * 0.6,
+        vx: (Math.random() - 0.5) * 0.5,
         vy: speed,
         radius,
         type,
-        value,
-        angle: Math.random() * Math.PI * 2,
-        spin: (Math.random() - 0.5) * 0.04
+        value
       });
     },
 
     update(now) {
-      // Controle por teclado
       const moveSpeed = 7;
       if (this.keys.left) {
         this.catcher.targetX = Math.max(
@@ -668,23 +676,18 @@
         );
       }
 
-      // Movimento suave do cesto
-      this.catcher.x += (this.catcher.targetX - this.catcher.x) * 0.22;
+      this.catcher.x += (this.catcher.targetX - this.catcher.x) * 0.25;
 
-      // Gerar novos corações caindo
-      if (now - this.lastSpawnTime > 520) {
+      if (now - this.lastSpawnTime > 540) {
         this.spawnItem();
         this.lastSpawnTime = now;
       }
 
-      // Atualizar itens em queda
       for (let i = this.items.length - 1; i >= 0; i--) {
         const it = this.items[i];
-        it.angle += it.spin;
         it.x += it.vx;
         it.y += it.vy;
 
-        // Verificar colisão com o cesto estelar
         const hitX = Math.abs(it.x - this.catcher.x) < this.catcher.width * 0.56;
         const hitY = Math.abs(it.y - this.catcher.y) < 24;
 
@@ -699,23 +702,21 @@
         }
       }
 
-      // Atualizar partículas de explosão
       for (let i = this.particles.length - 1; i >= 0; i--) {
         const p = this.particles[i];
         p.x += p.vx;
         p.y += p.vy;
-        p.vy += 0.06;
-        p.life -= 0.026;
+        p.vy += 0.08;
+        p.life -= 0.04;
         if (p.life <= 0) {
           this.particles.splice(i, 1);
         }
       }
 
-      // Atualizar textos flutuantes
       for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
         const ft = this.floatingTexts[i];
-        ft.y -= 1.1;
-        ft.life -= 0.022;
+        ft.y -= 1.2;
+        ft.life -= 0.03;
         if (ft.life <= 0) {
           this.floatingTexts.splice(i, 1);
         }
@@ -727,7 +728,6 @@
 
       this.points = Math.min(this.targetPoints, this.points + item.value);
 
-      // Efeitos sonoros e frases por tipo
       const phrases = cfg.frasesAoPegarCoracao || ["Eu te amo!", "Linda!", "Meu amor!"];
       let label = phrases[Math.floor(Math.random() * phrases.length)];
       let color = "#fda4af";
@@ -736,33 +736,25 @@
         SoundFX.playGoldenCatch();
         label = "+3 " + label;
         color = "#fde047";
-      } else if (item.type === "magnet") {
-        SoundFX.playMagnetCatch();
-        this.magnetTimer = 5.5;
-        label = "Super Ímã do Amor!";
-        color = "#d8b4fe";
       } else {
         SoundFX.playHeartCatch();
       }
 
-      // Criar partículas
-      const pColor =
-        item.type === "gold" ? "#fde047" : item.type === "magnet" ? "#c084fc" : "#fb7185";
-      for (let i = 0; i < 14; i++) {
-        const angle = (Math.PI * 2 * i) / 14;
-        const speed = Math.random() * 3.2 + 1.2;
+      const pColor = item.type === "gold" ? "#fde047" : "#fb7185";
+      for (let i = 0; i < 7; i++) {
+        const angle = (Math.PI * 2 * i) / 7;
+        const speed = Math.random() * 2.6 + 1.2;
         this.particles.push({
           x: item.x,
           y: item.y,
           vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed - 1,
+          vy: Math.sin(angle) * speed - 0.8,
           color: pColor,
-          radius: Math.random() * 3 + 1.5,
+          size: 4,
           life: 1
         });
       }
 
-      // Criar texto flutuante
       this.floatingTexts.push({
         x: Math.max(60, Math.min(this.width - 60, item.x)),
         y: item.y - 10,
@@ -776,10 +768,9 @@
       if (this.points >= this.targetPoints && !this.completed) {
         this.completed = true;
         SoundFX.playVictoryFanfare();
-        spawnGlobalHeartBurst(16);
         setTimeout(() => {
           this.completeGame();
-        }, 850);
+        }, 700);
       }
     },
 
@@ -847,104 +838,42 @@
       const ctx = this.ctx;
       ctx.clearRect(0, 0, this.width, this.height);
 
-      // Se o ímã estiver ativo, desenhar aura magnética ao redor do cesto
-      if (this.magnetTimer > 0) {
-        ctx.save();
-        ctx.strokeStyle = "rgba(192, 132, 252, 0.35)";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(this.catcher.x, this.catcher.y, 48 + Math.sin(performance.now() * 0.01) * 6, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
+      // Desenhar o Cesto Estelar via sprite pré-renderizado (0 shadowBlur por frame)
+      if (this.sprites.basket) {
+        ctx.drawImage(
+          this.sprites.basket,
+          this.catcher.x - this.sprites.basket.width / 2,
+          this.catcher.y - this.sprites.basket.height / 2
+        );
       }
 
-      // Desenhar o Cesto Estelar
-      ctx.save();
-      const cx = this.catcher.x;
-      const cy = this.catcher.y;
-      const cw = this.catcher.width;
-      const ch = this.catcher.height;
-
-      const basketGrad = ctx.createLinearGradient(cx - cw / 2, cy, cx + cw / 2, cy);
-      basketGrad.addColorStop(0, "#ec4899");
-      basketGrad.addColorStop(0.5, "#fde047");
-      basketGrad.addColorStop(1, "#a855f7");
-
-      ctx.shadowColor = "rgba(244, 63, 94, 0.75)";
-      ctx.shadowBlur = 18;
-      ctx.fillStyle = basketGrad;
-
-      // Arco luminoso do coletor
-      ctx.beginPath();
-      ctx.roundRect(cx - cw / 2, cy - ch / 2, cw, ch, 14);
-      ctx.fill();
-
-      // Interior escuro elegante do cesto
-      ctx.fillStyle = "#171136";
-      ctx.beginPath();
-      ctx.roundRect(cx - cw / 2 + 3, cy - ch / 2 + 3, cw - 6, ch - 6, 11);
-      ctx.fill();
-
-      // Coração central no cesto
-      ctx.fillStyle = "#fb7185";
-      this.drawHeartPath(ctx, cx, cy - 8, 16);
-      ctx.fill();
-      ctx.restore();
-
-      // Desenhar itens caindo
+      // Desenhar corações caindo via sprites pré-renderizados
       for (let i = 0; i < this.items.length; i++) {
         const it = this.items[i];
-        ctx.save();
-        ctx.translate(it.x, it.y);
-        ctx.rotate(Math.sin(it.angle) * 0.2);
-
-        if (it.type === "gold") {
-          ctx.shadowColor = "#fde047";
-          ctx.shadowBlur = 16;
-          ctx.fillStyle = "#fde047";
-          this.drawHeartPath(ctx, 0, -it.radius, it.radius * 1.9);
-          ctx.fill();
-        } else if (it.type === "magnet") {
-          ctx.shadowColor = "#c084fc";
-          ctx.shadowBlur = 16;
-          ctx.fillStyle = "#c084fc";
-          this.drawHeartPath(ctx, 0, -it.radius, it.radius * 1.8);
-          ctx.fill();
-        } else {
-          ctx.shadowColor = "#f43f5e";
-          ctx.shadowBlur = 14;
-          ctx.fillStyle = "#fb7185";
-          this.drawHeartPath(ctx, 0, -it.radius, it.radius * 1.75);
-          ctx.fill();
+        const sp = it.type === "gold" ? this.sprites.gold : this.sprites.rose;
+        if (sp) {
+          ctx.drawImage(sp, it.x - sp.width / 2, it.y - sp.height / 2);
         }
-        ctx.restore();
       }
 
-      // Desenhar partículas
+      // Desenhar partículas leves
       for (let i = 0; i < this.particles.length; i++) {
         const p = this.particles[i];
-        ctx.save();
         ctx.globalAlpha = Math.max(0, p.life);
         ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+        ctx.fillRect(p.x - 2, p.y - 2, p.size, p.size);
       }
 
-      // Desenhar textos flutuantes
+      // Desenhar textos flutuantes sem shadowBlur pesado
+      ctx.font = "700 14px 'Plus Jakarta Sans', sans-serif";
+      ctx.textAlign = "center";
       for (let i = 0; i < this.floatingTexts.length; i++) {
         const ft = this.floatingTexts[i];
-        ctx.save();
         ctx.globalAlpha = Math.max(0, ft.life);
-        ctx.font = "700 14px 'Plus Jakarta Sans', sans-serif";
         ctx.fillStyle = ft.color;
-        ctx.textAlign = "center";
-        ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
-        ctx.shadowBlur = 6;
         ctx.fillText(ft.text, ft.x, ft.y);
-        ctx.restore();
       }
+      ctx.globalAlpha = 1;
     }
   };
 
@@ -968,7 +897,6 @@
 
         SoundFX.playEnvelopeOpen();
         envelopeBtn.classList.add("is-opening");
-        spawnGlobalHeartBurst(20);
 
         const instruction = document.getElementById("envelope-instruction");
         if (instruction) {
@@ -987,14 +915,15 @@
     if (btnLoveShower) {
       btnLoveShower.addEventListener("click", () => {
         SoundFX.playVictoryFanfare();
-        spawnGlobalHeartBurst(110);
+        const isMobile = window.innerWidth < 768;
+        spawnGlobalHeartBurst(isMobile ? 55 : 90);
       });
     }
 
     if (btnReplay) {
       btnReplay.addEventListener("click", () => {
         SoundFX.playHeartCatch();
-        // Resetar envelope para poder abrir de novo depois
+        clearLoveRain();
         envelopeOpened = false;
         typewriterStarted = false;
         if (envelopeBtn) envelopeBtn.classList.remove("is-opening");
@@ -1032,7 +961,7 @@
   }
 
   // --------------------------------------------------------------------------
-  // 7. CONSTELAÇÃO DE MOTIVOS E CONTADOR DE TEMPO JUNTOS
+  // 7. CONSTELAÇÃO DE MOTIVOS
   // --------------------------------------------------------------------------
   function buildReasonsConstellation() {
     const nav = document.getElementById("stars-reasons-nav");
@@ -1071,11 +1000,16 @@
   }
 
   // --------------------------------------------------------------------------
-  // 8. CHUVA INTENSA DE CORAÇÕES E "EU TE AMO!" CAINDO DO CÉU
+  // 8. CHUVA INTENSA DE CORAÇÕES E "EU TE AMO!" (SOMENTE NA TELA DA CARTA)
   // --------------------------------------------------------------------------
   function spawnGlobalHeartBurst(count = 60) {
+    // Nunca soltar a chuva global se estiver na tela do jogo
+    if (currentStep === 2) return;
+
     const layer = document.getElementById("floating-effects-layer");
     if (!layer) return;
+
+    clearLoveRain();
 
     const basePhrases = cfg.frasesAoPegarCoracao || [];
     const rainPhrases = [
@@ -1090,23 +1024,21 @@
     const heartColors = ["#fb7185", "#f43f5e", "#fde047", "#f472b6", "#e879f9"];
 
     for (let i = 0; i < count; i++) {
-      setTimeout(() => {
+      const tId = setTimeout(() => {
+        if (currentStep === 2) return;
         const item = document.createElement("div");
         const showPhrase = i % 2 === 0;
         item.className = "floating-love-item" + (showPhrase ? " has-pill" : "");
 
-        // Posição horizontal espalhada por toda a largura da tela
-        const leftPct = Math.random() * 92 + 2;
-        const duration = (Math.random() * 2.2 + 2.3).toFixed(2);
-        const swayMid = `${((Math.random() - 0.5) * 90).toFixed(0)}px`;
-        const swayEnd = `${((Math.random() - 0.5) * 110).toFixed(0)}px`;
-        const rotMid = `${((Math.random() - 0.5) * 24).toFixed(0)}deg`;
-        const rotEnd = `${((Math.random() - 0.5) * 32).toFixed(0)}deg`;
+        const leftPct = Math.random() * 90 + 3;
+        const duration = (Math.random() * 2.0 + 2.4).toFixed(2);
+        const swayMid = `${((Math.random() - 0.5) * 70).toFixed(0)}px`;
+        const swayEnd = `${((Math.random() - 0.5) * 90).toFixed(0)}px`;
+        const rotMid = `${((Math.random() - 0.5) * 20).toFixed(0)}deg`;
+        const rotEnd = `${((Math.random() - 0.5) * 26).toFixed(0)}deg`;
 
         item.style.left = `${leftPct}%`;
-        item.style.fontSize = showPhrase
-          ? `${(Math.random() * 0.28 + 0.88).toFixed(2)}rem`
-          : `${(Math.random() * 0.5 + 1.0).toFixed(2)}rem`;
+        item.style.fontSize = showPhrase ? "0.92rem" : "1.15rem";
         item.style.setProperty("--fall-duration", `${duration}s`);
         item.style.setProperty("--sway-mid", swayMid);
         item.style.setProperty("--sway-end", swayEnd);
@@ -1114,7 +1046,7 @@
         item.style.setProperty("--rot-end", rotEnd);
 
         const color = heartColors[i % heartColors.length];
-        const heartSize = showPhrase ? 18 : Math.floor(Math.random() * 14 + 20);
+        const heartSize = showPhrase ? 16 : 22;
         const text = showPhrase ? rainPhrases[i % rainPhrases.length] : "";
 
         item.innerHTML = `
@@ -1125,10 +1057,12 @@
         `;
 
         layer.appendChild(item);
-        setTimeout(() => {
+        const removeId = setTimeout(() => {
           item.remove();
-        }, Number(duration) * 1000 + 200);
-      }, i * 38);
+        }, Number(duration) * 1000 + 150);
+        rainTimeouts.push(removeId);
+      }, i * 50);
+      rainTimeouts.push(tId);
     }
   }
 
